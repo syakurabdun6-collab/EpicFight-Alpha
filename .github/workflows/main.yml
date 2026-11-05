@@ -12,23 +12,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Mengambil file dari repository
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 2. Memasang Java 25
       - name: Setup Java 25
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
 
+      # 3. Menyiapkan Gradle 9.4
       - name: Setup Gradle 9.4
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.4.0'
 
+      # 4. Mengekstrak src.zip
+      - name: Extract Source ZIP
+        run: |
+          unzip -o src.zip -d .
+          ls -la src/main
+
+      # 5. Build mod
       - name: Build Mod
         run: gradle build --no-daemon
 
+      # 6. Memeriksa hasil JAR
       - name: Check JAR
         run: |
           JAR=$(find build/libs -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -n 1)
@@ -36,6 +47,7 @@ jobs:
           unzip -l "$JAR"
           unzip -l "$JAR" | grep -q fabric.mod.json
 
+      # 7. Mengunggah hasil build
       - name: Upload Mod
         uses: actions/upload-artifact@v4
         with:
