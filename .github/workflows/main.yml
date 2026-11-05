@@ -1,5 +1,5 @@
 
-name: Build HumanoidCombat
+name: Build EpicFight-Alpha
 
 on:
   workflow_dispatch:
