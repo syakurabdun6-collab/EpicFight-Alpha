@@ -1,0 +1,44 @@
+
+name: Build HumanoidCombat
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Setup Gradle 9.4
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.4.0'
+
+      - name: Build Mod
+        run: gradle build --no-daemon
+
+      - name: Check JAR
+        run: |
+          JAR=$(find build/libs -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -n 1)
+          test -n "$JAR"
+          unzip -l "$JAR"
+          unzip -l "$JAR" | grep -q fabric.mod.json
+
+      - name: Upload Mod
+        uses: actions/upload-artifact@v4
+        with:
+          name: HumanoidCombat-JAR
+          path: build/libs/*.jar
+          if-no-files-found: error
