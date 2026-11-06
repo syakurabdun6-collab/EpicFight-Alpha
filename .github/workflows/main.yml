@@ -1,70 +1,28 @@
-
-name: Build EpicFight-Alpha
+name: Build HumanoidCombat
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Mengambil repository
       - name: Checkout
         uses: actions/checkout@v4
-
-      # 2. Memasang Java 25
-      - name: Setup Java 25
+      - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '25'
-          cache: gradle
-
-      # 3. Memasang Gradle 9.7
-      - name: Setup Gradle 9.7
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.0'
-
-      # 4. Memeriksa versi Fabric Loom
-      - name: Check Loom Version
-        run: |
-          grep -n "fabric-loom" build.gradle
-          grep -q "version '1.18.4'" build.gradle
-
-      # 5. Mengekstrak source
-      - name: Extract Source ZIP
-        run: |
-          unzip -o src.zip -d .
-          ls -la src/main
-
-      # 6. Memeriksa file penting
-      - name: Check Project Files
-        run: |
-          test -f src/main/java/dev/humanoidcombat/HumanoidCombat.java
-          test -f src/main/resources/fabric.mod.json
-          test -f src/main/resources/assets/humanoidcombat/player_model_profiles.json
-
-      # 7. Build mod
-      - name: Build Mod
+      - name: Build JAR
         run: gradle build --no-daemon
-
-      # 8. Memeriksa hasil JAR
-      - name: Check JAR
-        run: |
-          JAR=$(find build/libs -maxdepth 1 -name '*.jar' ! -name '*-sources.jar' | head -n 1)
-          test -n "$JAR"
-          unzip -l "$JAR"
-          unzip -l "$JAR" | grep -q fabric.mod.json
-
-      # 9. Mengunggah hasil
-      - name: Upload Mod
+      - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: EpicFight-JAR
+          name: HumanoidCombat-JAR
           path: build/libs/*.jar
-          if-no-files-found: error
