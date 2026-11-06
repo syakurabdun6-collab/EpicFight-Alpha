@@ -1,38 +1,55 @@
-name: Build HumanoidCombat
+plugins {
+    id 'net.fabricmc.fabric-loom' version '1.18.4'
+    id 'maven-publish'
+}
 
-on:
-  push:
-  workflow_dispatch:
+version = project.mod_version
+group = project.maven_group
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+base {
+    archivesName.set("HumanoidCombat")
+}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+repositories {
+    mavenCentral()
+}
 
-      - name: Check src.zip
-        run: |
-          test -f src.zip
-          unzip -l src.zip
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '25'
+def sourceZip = layout.projectDirectory.file("src.zip")
+def extractedDir = layout.buildDirectory.dir("unpacked-src")
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '9.7.0'
+tasks.register("unpackSourceZip", Sync) {
+    from zipTree(sourceZip)
+    into extractedDir
+}
 
-      - name: Build JAR
-        run: gradle build --no-daemon
+sourceSets {
+    main {
+        java.srcDir(extractedDir.map { it.dir("src/main/java") })
+        resources.srcDir(extractedDir.map { it.dir("src/main/resources") })
+    }
+}
 
-      - name: Upload JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: HumanoidCombat-JAR
-          path: build/libs/*.jar
+tasks.named("compileJava") {
+    dependsOn("unpackSourceZip")
+}
+
+tasks.named("processResources") {
+    dependsOn("unpackSourceZip")
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 25
+}
