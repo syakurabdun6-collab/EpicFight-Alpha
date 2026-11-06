@@ -53,3 +53,6 @@ java {
 tasks.withType(JavaCompile).configureEach {
     options.release = 25
 }
+tasks.named("sourcesJar") {
+    dependsOn("unpackSourceZip")
+}
